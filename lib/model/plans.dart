@@ -3,48 +3,48 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-Future<List<Provider>> fetchProviders(http.Client client) async {
+Future<List<Plan>> fetchPlans(http.Client client) async {
   final response = await client
       .get(Uri.parse('https://app-challenge-api.herokuapp.com/plans'));
 
-  // Use the compute function to run parseProviders in a separate isolate.
-  return compute(parseProviders, response.body);
+  // Use the compute function to run parsePlans in a separate isolate.
+  return compute(parsePlans, response.body);
 }
 
-// A function that converts a response body into a List<Provider>.
-List<Provider> parseProviders(String responseBody) {
+// A function that converts a response body into a List<Plan>.
+List<Plan> parsePlans(String responseBody) {
   final parsed = jsonDecode(responseBody).cast<Map<String, dynamic>>();
 
-  return parsed.map<Provider>((json) => Provider.fromJson(json)).toList();
+  return parsed.map<Plan>((json) => Plan.fromJson(json)).toList();
 }
 
-class Provider {
+class Plan {
   final isp;
-  final download_speed;
-  final upload_speed;
-  final type_of_internet;
+  final downloadSpeed;
+  final uploadSpeed;
+  final typeOfInternet;
   final description;
-  final price_per_month;
-  final data_capacity;
+  final pricePerMonth;
+  final dataCapacity;
 
-  const Provider(
+  const Plan(
       {required this.isp,
-      required this.download_speed,
-      required this.upload_speed,
-      required this.type_of_internet,
+      required this.downloadSpeed,
+      required this.uploadSpeed,
+      required this.typeOfInternet,
       required this.description,
-      required this.price_per_month,
-      required this.data_capacity});
+      required this.pricePerMonth,
+      required this.dataCapacity});
 
-  factory Provider.fromJson(Map<String, dynamic> json) {
-    return Provider(
+  factory Plan.fromJson(Map<String, dynamic> json) {
+    return Plan(
       isp: json['isp'],
-      download_speed: json['download_speed'],
-      upload_speed: json['upload_speed'],
-      type_of_internet: json['type_of_internet'],
+      downloadSpeed: json['download_speed'],
+      uploadSpeed: json['upload_speed'],
+      typeOfInternet: json['type_of_internet'],
       description: json['data_capacity'],
-      price_per_month: json['price_per_month'],
-      data_capacity: json['data_capacity'],
+      pricePerMonth: json['price_per_month'],
+      dataCapacity: json['data_capacity'],
     );
   }
 }
