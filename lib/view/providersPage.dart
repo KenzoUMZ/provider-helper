@@ -74,11 +74,14 @@ class _ProvidersPageState extends State<ProvidersPage>
   Widget cardBuilder(String isp, int downloadSpeed, String uploadSpeed,
       String typeOfInternet, String price) {
     return SizedBox(
-        child: BlurryContainer(
+        child: Container(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-            blur: 5,
-            color: Colors.primaries[Random().nextInt(Colors.primaries.length)]
-                .withOpacity(0.1),
+            decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: Colors
+                        .primaries[Random().nextInt(Colors.primaries.length)])),
             child: Stack(
               children: [
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -90,7 +93,7 @@ class _ProvidersPageState extends State<ProvidersPage>
                         fontWeight: FontWeight.bold),
                   ),
                   Container(
-                      padding: const EdgeInsets.only(left: 30, top: 20),
+                      padding: const EdgeInsets.only(top: 20),
                       child: Row(
                         children: [
                           showParameter(
@@ -101,10 +104,7 @@ class _ProvidersPageState extends State<ProvidersPage>
                         ],
                       ))
                 ]),
-                Positioned(
-                  top: 20,
-                  right: 25,
-                  child: showPrice(price))
+                Positioned(top: 20, left: 250, child: showPrice(price))
               ],
             )));
   }
@@ -113,6 +113,7 @@ class _ProvidersPageState extends State<ProvidersPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             data,
@@ -130,17 +131,16 @@ class _ProvidersPageState extends State<ProvidersPage>
 
   Widget showPrice(String value) {
     return Container(
-      padding: EdgeInsets.only(left: 50),
       child: Column(
         children: [
           Text(
-            '\$'+ value,
+            '\$' + value,
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const Text(
             'Price',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.white, fontSize: 15),
           )
         ],
       ),
