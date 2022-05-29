@@ -1,34 +1,39 @@
-// ignore: file_names
 import 'dart:math';
-import 'package:blurrycontainer/blurrycontainer.dart';
 import 'package:flutter/material.dart';
-import 'package:provider_helper/model/plans.dart';
+import 'package:provider_helper/model/installer.dart';
 import 'package:http/http.dart' as http;
 
-class InstallersBuilder extends StatelessWidget {
-  const InstallersBuilder({super.key});
+class InstallersBuilder extends StatefulWidget {
+  const InstallersBuilder({Key? key}) : super(key: key);
 
+  @override
+  State<InstallersBuilder> createState() => _InstallersBuilderState();
+}
+
+class _InstallersBuilderState extends State<InstallersBuilder>
+    with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Color.fromARGB(255, 0, 2, 39),
         title: const Text(
-            'Plans',
-            maxLines: 2,
-            style: TextStyle(
-                color: Colors.white, fontSize: 40, fontFamily: 'Montserrat'),
-          )),
-      backgroundColor: Colors.black,
-      body: FutureBuilder<List<Provider>>(
-        future: fetchProviders(http.Client()),
+          'Installers',
+          maxLines: 2,
+          style: TextStyle(
+              color: Colors.white, fontSize: 40, fontFamily: 'Montserrat'),
+        ),
+      ),
+      backgroundColor: Color.fromARGB(255, 0, 2, 39),
+      body: FutureBuilder<List<Installer>>(
+        future: fetchInstallers(http.Client()),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
-              child: Text('An error has occurred!'),
+              child: Text('An erorr has occurred'),
             );
           } else if (snapshot.hasData) {
-            return ProvidersPage(providers: snapshot.data!);
+            return InstallersPage(installers: snapshot.data!);
           } else {
             return const Center(
               child: CircularProgressIndicator(),
@@ -38,76 +43,74 @@ class InstallersBuilder extends StatelessWidget {
       ),
     );
   }
-}
-
-class ProvidersPage extends StatefulWidget {
-  const ProvidersPage({super.key, required this.providers});
-
-  final List<Provider> providers;
 
   @override
-  State<ProvidersPage> createState() => _ProvidersPageState();
+  bool get wantKeepAlive => true;
 }
 
-class _ProvidersPageState extends State<ProvidersPage>
-    with AutomaticKeepAliveClientMixin {
+class InstallersPage extends StatelessWidget {
+  const InstallersPage({Key? key, required this.installers}) : super(key: key);
+
+  final List<Installer> installers;
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      itemCount: widget.providers.length,
-      separatorBuilder: (context, index) => const SizedBox(
-        height: 10,
-      ),
-      itemBuilder: (context, index) {
-        fetchProviders(http.Client());
-        return cardBuilder(
-            widget.providers[index].isp,
-            widget.providers[index].download_speed,
-            widget.providers[index].upload_speed.toString(),
-            widget.providers[index].type_of_internet,
-            widget.providers[index].price_per_month.toString());
-      },
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        itemCount: installers.length,
+        separatorBuilder: (context, index) => const SizedBox(
+              height: 10,
+            ),
+        itemBuilder: (context, index) {
+          fetchInstallers(http.Client());
+          return cardBuilder(
+              installers[index].name,
+              installers[index].pricePerKm.toString(),
+              installers[index].rating);
+        });
   }
 
-  
-
-  Widget cardBuilder(String isp, int downloadSpeed, String uploadSpeed,
-      String typeOfInternet, String price) {
-    return BlurryContainer(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-        blur: 5,
-        color: Colors.primaries[Random().nextInt(Colors.primaries.length)]
-            .withOpacity(0.1),
-        child: Row(
-          children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
-                isp,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold),
-              ),
-              Container(
-                  padding: const EdgeInsets.only(left: 30, top: 20),
-                  child: Row(
-                    children: [
-                      showParameter(downloadSpeed.toString(), 'Download'),
-                      showParameter(uploadSpeed.toString(), 'Upload'),
-                      showParameter(typeOfInternet.toUpperCase(), 'Type')
-                    ],
-                  ))
-            ]),
-            showPrice(price)
-          ],
-        ));
+  Widget cardBuilder(String name, String pricePerKm, int rating) {
+    return SizedBox(
+        child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: Colors
+                      .primaries[Random().nextInt(Colors.primaries.length)]),
+            ),
+            child: Stack(
+              children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Row(
+                        children: [
+                          showParameter(
+                              '\$' + pricePerKm.toString(), 'Price per km'),
+                        ],
+                      ))
+                ]),
+                Positioned(top: 20, left: 250, child: showRating(rating)),
+                Positioned(
+                    top: 10, left: 253, child: showProgressIndicator(rating))
+              ],
+            )));
   }
 
   Widget showParameter(String data, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             data,
@@ -123,25 +126,27 @@ class _ProvidersPageState extends State<ProvidersPage>
     );
   }
 
-  Widget showPrice(String value) {
+  Widget showRating(int value) {
     return Container(
-      padding: const EdgeInsets.only(left: 100),
       child: Column(
         children: [
           Text(
-            value,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+            value.toString(),
+            style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
           ),
-          const Text(
-            'Price',
-            style: TextStyle(color: Colors.white),
-          )
+         Container (padding: const EdgeInsets.only(top: 20),child:const Text(
+            'Rating',
+            style: TextStyle(color: Colors.white, fontSize: 15),
+          )),
         ],
       ),
     );
   }
 
-  @override
-  bool get wantKeepAlive => true;
+  Widget showProgressIndicator(int value) {
+    return CircularProgressIndicator(
+      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade300),
+      value: value / 10,
+    );
+  }
 }
