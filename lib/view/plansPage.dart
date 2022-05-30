@@ -1,87 +1,103 @@
 // ignore: file_names
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:provider_helper/model/installer.dart';
+import 'package:provider_helper/controllers/plansFetch.dart';
 import 'package:provider_helper/model/plans.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider_helper/view/plansFilters.dart';
 
-class PlansBuilder extends StatelessWidget {
-  const PlansBuilder({super.key});
+class PlansPage extends StatefulWidget {
+  const PlansPage({super.key});
 
+  @override
+  State<PlansPage> createState() => _PlansPageState();
+}
+
+class _PlansPageState extends State<PlansPage>
+    with AutomaticKeepAliveClientMixin {
+  late Future<List<Plan>> _futurePlan;
+  late String state = '';
+  final Text title = const Text(
+    'Plans',
+    maxLines: 2,
+    style:
+        TextStyle(color: Colors.white, fontSize: 40, fontFamily: 'Montserrat'),
+  );
+  @override
+  void initState() {
+    super.initState();
+    _futurePlan = fetchPlans(http.Client());
+  }
+
+  var mainColor = Color.fromRGBO(25, 0, 40, 1);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          backgroundColor: Colors.black,
-          title: const Text(
-            'Plans',
-            maxLines: 2,
-            style: TextStyle(
-                color: Colors.white, fontSize: 40, fontFamily: 'Montserrat'),
-          )),
-      backgroundColor: Colors.black,
-      body: FutureBuilder<List<Plan>>(
-        future: fetchPlans(http.Client()),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text('An error has occurred!'),
-            );
-          } else if (snapshot.hasData) {
-            return PlansPage(plans: snapshot.data!);
-          } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },
-      ),
-    );
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            _awaitReturnValueFromSecondScreen(context);
+          },
+          child: Icon(
+            Icons.filter_alt_outlined,
+            color: Colors.black,
+          ),
+          backgroundColor: Colors.white,
+        ),
+        appBar: AppBar(
+          backgroundColor: mainColor,
+          title: title,
+        ),
+        backgroundColor: mainColor,
+        body: RefreshIndicator(
+            color: Colors.black,
+            onRefresh: () {
+              setState(() {
+                _futurePlan = fetchPlansByState(http.Client(), state);
+              });
+              return Future<void>.delayed(const Duration(seconds: 2));
+            },
+            child: FutureBuilder<List<Plan>>(
+                future: _futurePlan,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text('An error has occurred'),
+                    );
+                  } else if (snapshot.hasData) {
+                    return PlansList(snapshot.data!);
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                })));
   }
-}
 
-class PlansPage extends StatefulWidget {
-  const PlansPage({super.key, required this.plans});
-
-  final List<Plan> plans;
-
-  @override
-  State<PlansPage> createState() => _ProvidersPageState();
-}
-
-class _ProvidersPageState extends State<PlansPage>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  Widget build(BuildContext context) {
+  Widget PlansList(List<Plan> plans) {
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      itemCount: widget.plans.length,
-      separatorBuilder: (context, index) => const SizedBox(
-        height: 10,
-      ),
-      itemBuilder: (context, index) {
-        fetchPlans(http.Client());
-        return cardBuilder(
-            widget.plans[index].isp,
-            widget.plans[index].downloadSpeed,
-            widget.plans[index].uploadSpeed.toString(),
-            widget.plans[index].typeOfInternet,
-            widget.plans[index].pricePerMonth.toString());
-      },
-    );
+        itemBuilder: (context, index) {
+          return cardBuilder(
+              plans[index].isp,
+              plans[index].downloadSpeed,
+              plans[index].uploadSpeed.toString(),
+              plans[index].typeOfInternet,
+              plans[index].pricePerMonth.toString());
+        },
+        separatorBuilder: (context, index) => const SizedBox(
+              height: 10,
+            ),
+        itemCount: plans.length);
   }
 
   Widget cardBuilder(String isp, int downloadSpeed, String uploadSpeed,
       String typeOfInternet, String price) {
     return SizedBox(
         child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
             decoration: BoxDecoration(
                 color: Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                     color: Colors
-                        .primaries[Random().nextInt(Colors.primaries.length)])),
+                        .primaries[Random().nextInt(Colors.primaries.length)]),
+                borderRadius: BorderRadius.circular(20)),
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
             child: Stack(
               children: [
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -93,18 +109,16 @@ class _ProvidersPageState extends State<PlansPage>
                         fontWeight: FontWeight.bold),
                   ),
                   Container(
-                      padding: const EdgeInsets.only(top: 20),
+                      padding: const EdgeInsets.only(left: 30, top: 20),
                       child: Row(
                         children: [
-                          showParameter(
-                              downloadSpeed.toString() + ' mbps', 'Download'),
-                          showParameter(
-                              uploadSpeed.toString() + ' mbps', 'Upload'),
+                          showParameter('$downloadSpeed mbps', 'Download'),
+                          showParameter('$uploadSpeed mbps', 'Upload'),
                           showParameter(typeOfInternet.toUpperCase(), 'Type')
                         ],
                       ))
                 ]),
-                Positioned(top: 20, left: 250, child: showPrice(price))
+                Positioned(top: 20, right: 25, child: showPrice(price))
               ],
             )));
   }
@@ -113,7 +127,6 @@ class _ProvidersPageState extends State<PlansPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             data,
@@ -131,16 +144,17 @@ class _ProvidersPageState extends State<PlansPage>
 
   Widget showPrice(String value) {
     return Container(
+      padding: EdgeInsets.only(left: 50),
       child: Column(
         children: [
           Text(
-            '\$' + value,
+            '\$$value',
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const Text(
             'Price',
-            style: TextStyle(color: Colors.white, fontSize: 15),
+            style: TextStyle(color: Colors.white),
           )
         ],
       ),
@@ -148,5 +162,24 @@ class _ProvidersPageState extends State<PlansPage>
   }
 
   @override
+  // TODO: implement wantKeepAlive
   bool get wantKeepAlive => true;
+
+  void _awaitReturnValueFromSecondScreen(BuildContext context) async {
+    // start the SecondScreen and wait for it to finish with a result
+    final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PlansFilter(),
+        ));
+
+    // after the SecondScreen result comes back update the Text widget with it
+    setState(() {
+      if (result != 'None') {
+        state = result;
+      } else {
+        state = '';
+      }
+    });
+  }
 }

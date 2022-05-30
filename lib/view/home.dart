@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider_helper/view/installersDetails.dart';
 import 'package:provider_helper/view/installersPage.dart';
-import 'providersPage.dart';
+import 'plansPage.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
@@ -10,16 +12,11 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-     
-        controller: controller,
-        children: const <Widget>[PlansBuilder()]);
-  }
-
-  Widget title(String text) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      child: Text(text, style: const TextStyle(color: Colors.white)),
-    );
+    ScreenUtil.init(context);
+    return Stack(alignment: Alignment.center, children: [
+      PageView(
+          controller: controller,
+          children: const <Widget>[PlansPage(), InstallersBuilder()]),
+    ]);
   }
 }

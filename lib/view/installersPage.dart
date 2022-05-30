@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider_helper/model/installer.dart';
 import 'package:http/http.dart' as http;
+import 'package:percent_indicator/percent_indicator.dart';
+import 'package:provider_helper/view/installersDetails.dart';
 
 class InstallersBuilder extends StatefulWidget {
   const InstallersBuilder({Key? key}) : super(key: key);
@@ -65,45 +67,57 @@ class InstallersPage extends StatelessWidget {
           return cardBuilder(
               installers[index].name,
               installers[index].pricePerKm.toString(),
-              installers[index].rating);
+              installers[index].rating,
+              installers[index].lat,
+              installers[index].lng,
+              context);
         });
   }
 
-  Widget cardBuilder(String name, String pricePerKm, int rating) {
+  Widget cardBuilder(String name, String pricePerKm, int rating, double lat,
+      double lng, BuildContext context) {
     return SizedBox(
-        child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: Colors
-                      .primaries[Random().nextInt(Colors.primaries.length)]),
-            ),
-            child: Stack(
-              children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: Row(
+        child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => MapSample(lat: lat, lng: lng)));
+            },
+            child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: Colors.primaries[
+                          Random().nextInt(Colors.primaries.length)]),
+                ),
+                child: Stack(
+                  children: [
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          showParameter(
-                              '\$' + pricePerKm.toString(), 'Price per km'),
-                        ],
-                      ))
-                ]),
-                Positioned(top: 20, left: 250, child: showRating(rating)),
-                Positioned(
-                    top: 10, left: 253, child: showProgressIndicator(rating))
-              ],
-            )));
+                          Text(
+                            name,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Container(
+                              padding: const EdgeInsets.only(top: 20),
+                              child: Row(
+                                children: [
+                                  showParameter('\$' + pricePerKm.toString(),
+                                      'Price per km'),
+                                ],
+                              ))
+                        ]),
+                    Positioned(left: 250, child: showRating(rating)),
+                  ],
+                ))));
   }
 
   Widget showParameter(String data, String label) {
@@ -127,26 +141,28 @@ class InstallersPage extends StatelessWidget {
   }
 
   Widget showRating(int value) {
-    return Container(
-      child: Column(
-        children: [
-          Text(
-            value.toString(),
-            style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
-          ),
-         Container (padding: const EdgeInsets.only(top: 20),child:const Text(
-            'Rating',
-            style: TextStyle(color: Colors.white, fontSize: 15),
-          )),
-        ],
+    return Column(children: [
+      CircularPercentIndicator(
+        radius: 25.0,
+        lineWidth: 5.0,
+        percent: (value.toDouble() / 10),
+        center: Text(
+          value.toString(),
+          style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Montserrat'),
+        ),
+        progressColor: Colors.green,
+        rotateLinearGradient: true,
+        backgroundColor: Colors.black12,
+        animation: true,
+        animationDuration: 1000,
+        footer: Container(
+          padding: const EdgeInsets.only(top: 5),
+          child: Text('Rating', style: TextStyle(color: Colors.white)),
+        ),
       ),
-    );
-  }
-
-  Widget showProgressIndicator(int value) {
-    return CircularProgressIndicator(
-      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade300),
-      value: value / 10,
-    );
+    ]);
   }
 }
