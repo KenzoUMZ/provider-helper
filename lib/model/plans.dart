@@ -3,21 +3,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-Future<List<Plan>> fetchPlans(http.Client client) async {
-  final response = await client
-      .get(Uri.parse('https://app-challenge-api.herokuapp.com/plans'));
-
-  // Use the compute function to run parsePlans in a separate isolate.
-  return compute(parsePlans, response.body);
-}
-
-// A function that converts a response body into a List<Plan>.
-List<Plan> parsePlans(String responseBody) {
-  final parsed = jsonDecode(responseBody).cast<Map<String, dynamic>>();
-
-  return parsed.map<Plan>((json) => Plan.fromJson(json)).toList();
-}
-
 class Plan {
   final isp;
   final downloadSpeed;
@@ -47,4 +32,5 @@ class Plan {
       dataCapacity: json['data_capacity'],
     );
   }
+
 }
